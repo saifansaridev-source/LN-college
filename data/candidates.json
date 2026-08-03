@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1",
+    "name": "Ankush Pandey",
+    "order": 1,
+    "image": "/candidates/ankush-pandey.jpg",
+    "voteCount": 0
+  },
+  {
+    "id": "2",
+    "name": "Mohammad Hamza",
+    "order": 2,
+    "image": "/candidates/mohammad-hamza.jpg",
+    "voteCount": 0
+  },
+  {
+    "id": "3",
+    "name": "Bhushan Chapetkar",
+    "order": 3,
+    "image": "/candidates/bhushan-chapetkar.jpg",
+    "voteCount": 0
+  },
+  {
+    "id": "4",
+    "name": "Kasim Shaikh",
+    "order": 4,
+    "image": "/candidates/kasim-shaikh.jpg",
+    "voteCount": 0
+  }
+]

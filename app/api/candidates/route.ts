@@ -1,56 +1,17 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
 
-export const dynamic = "force-dynamic";
-
-const FALLBACK_CANDIDATES = [
-  { id: "1", name: "Ankush Pandey", order: 1, image: "/candidates/ankush-pandey.jpg", voteCount: 0 },
-  { id: "2", name: "Mohammad Hamza", order: 2, image: "/candidates/mohammad-hamza.jpg", voteCount: 0 },
-  { id: "3", name: "Bhushan Chapetkar", order: 3, image: "/candidates/bhushan-chapetkar.jpg", voteCount: 0 },
-  { id: "4", name: "Kasim Shaikh", order: 4, image: "/candidates/kasim-shaikh.jpg", voteCount: 0 },
-];
-
 export async function GET() {
   try {
     const db = await getDb();
-    const candidatesCollection = db.collection("candidates");
-
-    let candidates = await candidatesCollection
+    const candidates = await db
+      .collection("candidates")
       .find({})
       .sort({ order: 1 })
       .toArray();
-
-    // Auto-seed if the database collection is empty
-    if (!candidates || candidates.length === 0) {
-      console.log("Database empty. Auto-seeding initial 4 candidates...");
-      const seedItems = FALLBACK_CANDIDATES.map((c) => ({
-        name: c.name,
-        order: c.order,
-        image: c.image,
-        voteCount: 0,
-        createdAt: new Date(),
-      }));
-
-      await candidatesCollection.insertMany(seedItems);
-
-      candidates = await candidatesCollection
-        .find({})
-        .sort({ order: 1 })
-        .toArray();
-    }
-
-    const formatted = candidates.map((c) => ({
-      id: c._id.toString(),
-      name: c.name,
-      order: c.order,
-      image: c.image || `/candidates/${c.name.toLowerCase().replace(/\s+/g, "-")}.jpg`,
-      voteCount: c.voteCount || 0,
-    }));
-
-    return NextResponse.json({ candidates: formatted });
-  } catch (error) {
-    console.error("MongoDB error in candidates endpoint:", error);
-    // Return the hardcoded fallback list so the kiosk UI never shows blank
-    return NextResponse.json({ candidates: FALLBACK_CANDIDATES }, { status: 200 });
+    return NextResponse.json({ candidates });
+  } catch (err) {
+    console.error("Fetch candidates error:", err);
+    return NextResponse.json({ error: "Could not load candidates." }, { status: 500 });
   }
 }

@@ -1,55 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import clientPromise from "@/lib/mongodb";
 import { isAdminAuthenticated } from "@/lib/auth";
 
-export const dynamic = "force-dynamic";
-
-export async function POST() {
+export async function POST(req: NextRequest) {
+  if (!isAdminAuthenticated(req)) {
+    return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+  }
   try {
-    const authenticated = await isAdminAuthenticated();
-    if (!authenticated) {
-      return NextResponse.json(
-        { error: "Unauthorized. Admin login required." },
-        { status: 401 }
-      );
-    }
-
-    const db = await getDb();
     const client = await clientPromise;
+    const db = await getDb();
+    const votes = db.collection("votes");
+    const candidates = db.collection("candidates");
 
-    const candidatesCollection = db.collection("candidates");
-    const votesCollection = db.collection("votes");
-
-    // Count votes before deleting so we can report how many were cleared
-    const clearedVotes = await votesCollection.countDocuments();
-
-    // Use a MongoDB transaction so the two operations are atomic —
-    // if either fails, neither change persists.
+    let clearedVotes = 0;
     const session = client.startSession();
     try {
       await session.withTransaction(async () => {
-        await votesCollection.deleteMany({}, { session });
-        await candidatesCollection.updateMany(
-          {},
-          { $set: { voteCount: 0 } },
-          { session }
-        );
+        const deleteResult = await votes.deleteMany({}, { session });
+        clearedVotes = deleteResult.deletedCount || 0;
+        await candidates.updateMany({}, { $set: { voteCount: 0 } }, { session });
       });
     } finally {
       await session.endSession();
     }
 
-    return NextResponse.json({
-      success: true,
-      clearedVotes,
-      message: `All election votes have been reset. ${clearedVotes} vote record(s) cleared.`,
-    });
-  } catch (error) {
-    console.error("Error resetting votes:", error);
-    return NextResponse.json(
-      { error: "Failed to reset votes" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, clearedVotes });
+  } catch (err) {
+    console.error("Reset votes error:", err);
+    return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   }
 }

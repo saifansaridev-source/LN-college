@@ -3,101 +3,36 @@ import { getDb } from "@/lib/mongodb";
 import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
-export const dynamic = "force-dynamic";
-
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { candidateId } = body;
-
+    const { candidateId } = await req.json();
     if (!candidateId) {
-      return NextResponse.json(
-        { error: "Candidate ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Please select a candidate." }, { status: 400 });
     }
 
-    const db = await getDb();
-    const candidatesCollection = db.collection("candidates");
-    const votesCollection = db.collection("votes");
-
-    // Build a flexible query that matches both ObjectId and plain string _id fields,
-    // AND the numeric "order" field so fallback IDs ("1","2","3","4") also resolve.
-    let queryFilter: any;
-    if (ObjectId.isValid(candidateId) && candidateId.length === 24) {
-      // Full 24-char hex string → treat as ObjectId
-      queryFilter = {
-        $or: [
-          { _id: new ObjectId(candidateId) },
-          { _id: candidateId },
-          { order: parseInt(candidateId, 10) || -1 },
-        ],
-      };
-    } else {
-      // Short numeric string ("1","2","3","4") from fallback → match by order field
-      queryFilter = {
-        $or: [
-          { _id: candidateId },
-          { order: parseInt(candidateId, 10) || -1 },
-        ],
-      };
-    }
-
-    const candidate = await candidatesCollection.findOne(queryFilter);
-
-    if (!candidate) {
-      return NextResponse.json(
-        { error: "Candidate not found" },
-        { status: 404 }
-      );
-    }
-
-    const validCandidateId = candidate._id;
     const client = await clientPromise;
+    const db = await getDb();
+    const candidates = db.collection("candidates");
+    const votes = db.collection("votes");
 
-    try {
-      const session = client.startSession();
-      try {
-        await session.withTransaction(async () => {
-          await candidatesCollection.updateOne(
-            { _id: validCandidateId },
-            { $inc: { voteCount: 1 } },
-            { session }
-          );
-          await votesCollection.insertOne(
-            {
-              candidateId: validCandidateId,
-              candidateName: candidate.name,
-              timestamp: new Date(),
-            },
-            { session }
-          );
-        });
-      } finally {
-        await session.endSession();
-      }
-    } catch (tErr) {
-      // Transaction not supported (e.g. Atlas M0/shared tier) — fall back to direct ops
-      await candidatesCollection.updateOne(
-        { _id: validCandidateId },
-        { $inc: { voteCount: 1 } }
-      );
-      await votesCollection.insertOne({
-        candidateId: validCandidateId,
-        candidateName: candidate.name,
-        timestamp: new Date(),
-      });
+    const candidate = await candidates.findOne({ _id: new ObjectId(candidateId) });
+    if (!candidate) {
+      return NextResponse.json({ error: "Candidate not found." }, { status: 404 });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Vote recorded successfully",
-    });
-  } catch (error) {
-    console.error("Error processing vote:", error);
-    return NextResponse.json(
-      { error: "Failed to record vote" },
-      { status: 500 }
-    );
+    const session = client.startSession();
+    try {
+      await session.withTransaction(async () => {
+        await votes.insertOne({ candidateId: candidate._id, timestamp: new Date() }, { session });
+        await candidates.updateOne({ _id: candidate._id }, { $inc: { voteCount: 1 } }, { session });
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("Vote error:", err);
+    return NextResponse.json({ error: "Something went wrong. Please try again." }, { status: 500 });
   }
 }

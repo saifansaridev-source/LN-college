@@ -1,33 +1,22 @@
-import { MongoClient, Db } from "mongodb";
+import jwt from "jsonwebtoken";
+import { NextRequest } from "next/server";
 
-const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "ln_college_voting";
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-me";
 
-if (!uri) {
-  throw new Error("Please add MONGODB_URI to your .env.local file");
+export function signAdminToken() {
+  return jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "4h" });
 }
 
-declare global {
-  // eslint-disable-next-line no-var
-  var _mongoClientPromise: Promise<MongoClient> | undefined;
+export function verifyAdminToken(token: string | undefined) {
+  if (!token) return null;
+  try {
+    return jwt.verify(token, JWT_SECRET) as { role: "admin" };
+  } catch {
+    return null;
+  }
 }
 
-let clientPromise: Promise<MongoClient>;
-
-// Cache the connection on the global object in ALL environments (not just dev).
-// This is essential on Vercel serverless — without it, every request can open
-// a new connection and you'll hit Atlas's connection limit fast.
-if (!global._mongoClientPromise) {
-  const client = new MongoClient(uri, {
-    maxPoolSize: 10,
-  });
-  global._mongoClientPromise = client.connect();
+export function isAdminAuthenticated(req: NextRequest): boolean {
+  const token = req.cookies.get("admin_token")?.value;
+  return !!verifyAdminToken(token);
 }
-clientPromise = global._mongoClientPromise;
-
-export async function getDb(): Promise<Db> {
-  const client = await clientPromise;
-  return client.db(dbName);
-}
-
-export default clientPromise;

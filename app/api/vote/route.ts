@@ -21,9 +21,26 @@ export async function POST(req: NextRequest) {
     const candidatesCollection = db.collection("candidates");
     const votesCollection = db.collection("votes");
 
-    let queryFilter: any = { _id: candidateId };
-    if (ObjectId.isValid(candidateId)) {
-      queryFilter = { $or: [{ _id: candidateId }, { _id: new ObjectId(candidateId) }] };
+    // Build a flexible query that matches both ObjectId and plain string _id fields,
+    // AND the numeric "order" field so fallback IDs ("1","2","3","4") also resolve.
+    let queryFilter: any;
+    if (ObjectId.isValid(candidateId) && candidateId.length === 24) {
+      // Full 24-char hex string → treat as ObjectId
+      queryFilter = {
+        $or: [
+          { _id: new ObjectId(candidateId) },
+          { _id: candidateId },
+          { order: parseInt(candidateId, 10) || -1 },
+        ],
+      };
+    } else {
+      // Short numeric string ("1","2","3","4") from fallback → match by order field
+      queryFilter = {
+        $or: [
+          { _id: candidateId },
+          { order: parseInt(candidateId, 10) || -1 },
+        ],
+      };
     }
 
     const candidate = await candidatesCollection.findOne(queryFilter);
@@ -60,7 +77,7 @@ export async function POST(req: NextRequest) {
         await session.endSession();
       }
     } catch (tErr) {
-      // Fallback for standalone MongoDB (no replica set = no transactions)
+      // Transaction not supported (e.g. Atlas M0/shared tier) — fall back to direct ops
       await candidatesCollection.updateOne(
         { _id: validCandidateId },
         { $inc: { voteCount: 1 } }

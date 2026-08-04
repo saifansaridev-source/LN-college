@@ -55,6 +55,7 @@ export default function AdminDashboardPage() {
       const res = await fetch("/api/admin/results");
 
       if (res.status === 401) {
+        // Not authenticated — show login form
         setIsAuthenticated(false);
         setResults(null);
         return;
@@ -68,9 +69,17 @@ export default function AdminDashboardPage() {
         setLastUpdated(new Date());
         setFetchError(null);
       } else {
-        setFetchError(data.error || "Failed to fetch live election results.");
+        // Non-401 error (e.g. 503 MongoDB unreachable).
+        // If we haven't determined auth status yet, show login form.
+        setIsAuthenticated((prev) => (prev === null ? false : prev));
+        setFetchError(
+          data.error ||
+            "Database unavailable — check that MONGODB_URI is set in Vercel environment variables."
+        );
       }
     } catch (err) {
+      // Network failure — never leave user stuck on spinner
+      setIsAuthenticated((prev) => (prev === null ? false : prev));
       setFetchError("Network error polling election results.");
     } finally {
       setIsLoadingResults(false);

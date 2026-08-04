@@ -9,7 +9,16 @@ export async function GET() {
       .find({})
       .sort({ order: 1 })
       .toArray();
-    return NextResponse.json({ candidates });
+
+    const formatted = candidates.map((c) => ({
+      id: c._id.toString(),
+      name: c.name,
+      order: c.order,
+      voteCount: c.voteCount,
+      image: `/candidates/${c.name.toLowerCase().replace(/\s+/g, "-")}.jpg`,
+    }));
+
+    return NextResponse.json({ candidates: formatted });
   } catch (err) {
     console.error("Fetch candidates error:", err);
     return NextResponse.json({ error: "Could not load candidates." }, { status: 500 });

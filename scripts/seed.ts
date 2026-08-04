@@ -10,10 +10,10 @@ async function seed() {
   const db = client.db(dbName);
 
   const candidates = [
-    { name: "Ankush Pandey", order: 1 },
-    { name: "Mohammad Hamza", order: 2 },
-    { name: "Bhushan Chapetkar", order: 3 },
-    { name: "Kasim Shaikh", order: 4 },
+    { name: "Mohammad Hamza", order: 1 },
+    { name: "Kasim Shaikh", order: 2 },
+    { name: "Ankush Pandey", order: 3 },
+    { name: "Bhushan Chapetkar", order: 4 },
   ];
 
   for (const c of candidates) {

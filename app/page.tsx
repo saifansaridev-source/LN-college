@@ -28,19 +28,19 @@ export default function VotingKioskPage() {
       } else {
         // Fallback default candidates if API returns empty
         setCandidates([
-          { id: "1", name: "Ankush Pandey", order: 1, image: "/candidates/ankush-pandey.jpg" },
-          { id: "2", name: "Mohammad Hamza", order: 2, image: "/candidates/mohammad-hamza.jpg" },
-          { id: "3", name: "Bhushan Chapetkar", order: 3, image: "/candidates/bhushan-chapetkar.jpg" },
-          { id: "4", name: "Kasim Shaikh", order: 4, image: "/candidates/kasim-shaikh.jpg" },
+          { id: "1", name: "Mohammad Hamza", order: 1, image: "/candidates/ankush-pandey.jpg" },
+          { id: "2", name: "Kasim Shaikh", order: 2, image: "/candidates/mohammad-hamza.jpg" },
+          { id: "3", name: "Ankush Pandey", order: 3, image: "/candidates/bhushan-chapetkar.jpg" },
+          { id: "4", name: "Bhushan Chapetkar", order: 4, image: "/candidates/kasim-shaikh.jpg" },
         ]);
       }
     } catch (err) {
       console.error("Error fetching candidates:", err);
       setCandidates([
-        { id: "1", name: "Ankush Pandey", order: 1, image: "/candidates/ankush-pandey.jpg" },
-        { id: "2", name: "Mohammad Hamza", order: 2, image: "/candidates/mohammad-hamza.jpg" },
-        { id: "3", name: "Bhushan Chapetkar", order: 3, image: "/candidates/bhushan-chapetkar.jpg" },
-        { id: "4", name: "Kasim Shaikh", order: 4, image: "/candidates/kasim-shaikh.jpg" },
+        { id: "1", name: "Mohammad Hamza", order: 1, image: "/candidates/ankush-pandey.jpg" },
+        { id: "2", name: "Kasim Shaikh", order: 2, image: "/candidates/mohammad-hamza.jpg" },
+        { id: "3", name: "Ankush Pandey", order: 3, image: "/candidates/bhushan-chapetkar.jpg" },
+        { id: "4", name: "Bhushan Chapetkar", order: 4, image: "/candidates/kasim-shaikh.jpg" },
       ]);
     }
   };

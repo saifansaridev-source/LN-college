@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDatabase } from "@/lib/mongodb";
-import * as fs from "fs";
-import * as path from "path";
+import { getDb } from "@/lib/mongodb";
 
 export const dynamic = "force-dynamic";
 
@@ -12,23 +10,9 @@ const FALLBACK_CANDIDATES = [
   { id: "4", name: "Kasim Shaikh", order: 4, image: "/candidates/kasim-shaikh.jpg", voteCount: 0 },
 ];
 
-const LOCAL_DATA_FILE = path.resolve(process.cwd(), "data", "candidates.json");
-
-function getLocalFallbackData() {
-  try {
-    if (fs.existsSync(LOCAL_DATA_FILE)) {
-      const data = fs.readFileSync(LOCAL_DATA_FILE, "utf-8");
-      return JSON.parse(data);
-    }
-  } catch (e) {
-    // Ignore error
-  }
-  return FALLBACK_CANDIDATES;
-}
-
 export async function GET() {
   try {
-    const db = await getDatabase();
+    const db = await getDb();
     const candidatesCollection = db.collection("candidates");
 
     let candidates = await candidatesCollection
@@ -36,7 +20,7 @@ export async function GET() {
       .sort({ order: 1 })
       .toArray();
 
-    // Auto-seed if database collection is empty
+    // Auto-seed if the database collection is empty
     if (!candidates || candidates.length === 0) {
       console.log("Database empty. Auto-seeding initial 4 candidates...");
       const seedItems = FALLBACK_CANDIDATES.map((c) => ({
@@ -65,8 +49,8 @@ export async function GET() {
 
     return NextResponse.json({ candidates: formatted });
   } catch (error) {
-    console.warn("MongoDB connection notice: returning resilient candidate data fallback", error);
-    const localData = getLocalFallbackData();
-    return NextResponse.json({ candidates: localData });
+    console.error("MongoDB error in candidates endpoint:", error);
+    // Return the hardcoded fallback list so the kiosk UI never shows blank
+    return NextResponse.json({ candidates: FALLBACK_CANDIDATES }, { status: 200 });
   }
 }

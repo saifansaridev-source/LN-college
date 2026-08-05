@@ -28,26 +28,26 @@ export default function VotingKioskPage() {
       } else {
         // Fallback default candidates if API returns empty
         setCandidates([
-          { id: "1", name: "Mohammad Hamza", order: 1, image: "/candidates/ankush-pandey.jpg" },
-          { id: "2", name: "Kasim Shaikh", order: 2, image: "/candidates/mohammad-hamza.jpg" },
-          { id: "3", name: "Ankush Pandey", order: 3, image: "/candidates/bhushan-chapetkar.jpg" },
-          { id: "4", name: "Bhushan Chapetkar", order: 4, image: "/candidates/kasim-shaikh.jpg" },
+          { id: "1", name: "Ankush Pandey", order: 1, image: "/candidates/ankush-pandey.jpg" },
+          { id: "2", name: "Mohammad Hamza", order: 2, image: "/candidates/mohammad-hamza.jpg" },
+          { id: "3", name: "Bhushan Chapetkar", order: 3, image: "/candidates/bhushan-chapetkar.jpg" },
+          { id: "4", name: "Kasim Shaikh", order: 4, image: "/candidates/kasim-shaikh.jpg" },
         ]);
       }
     } catch (err) {
       console.error("Error fetching candidates:", err);
       setCandidates([
-        { id: "1", name: "Mohammad Hamza", order: 1, image: "/candidates/ankush-pandey.jpg" },
-        { id: "2", name: "Kasim Shaikh", order: 2, image: "/candidates/mohammad-hamza.jpg" },
-        { id: "3", name: "Ankush Pandey", order: 3, image: "/candidates/bhushan-chapetkar.jpg" },
-        { id: "4", name: "Bhushan Chapetkar", order: 4, image: "/candidates/kasim-shaikh.jpg" },
+        { id: "1", name: "Ankush Pandey", order: 1, image: "/candidates/ankush-pandey.jpg" },
+        { id: "2", name: "Mohammad Hamza", order: 2, image: "/candidates/mohammad-hamza.jpg" },
+        { id: "3", name: "Bhushan Chapetkar", order: 3, image: "/candidates/bhushan-chapetkar.jpg" },
+        { id: "4", name: "Kasim Shaikh", order: 4, image: "/candidates/kasim-shaikh.jpg" },
       ]);
     }
   };
 
   useEffect(() => {
     fetchCandidates();
-    
+
     // Prevent back-button viewing of prior states
     window.history.pushState(null, "", window.location.href);
     const handlePopState = () => {
@@ -174,11 +174,10 @@ export default function VotingKioskPage() {
                 key={candidate.id}
                 type="button"
                 onClick={() => setSelectedCandidateId(candidate.id)}
-                className={`relative group flex items-center justify-between p-5 md:p-6 rounded-3xl transition-all duration-200 border-4 text-left shadow-lg active:scale-[0.98] ${
-                  isSelected
-                    ? "bg-navy-900 border-gold-500 text-white shadow-2xl ring-4 ring-gold-400/50 translate-y-[-2px]"
-                    : "bg-white border-slate-200 hover:border-gold-400 text-navy-900 hover:shadow-xl"
-                }`}
+                className={`relative group flex items-center justify-between p-5 md:p-6 rounded-3xl transition-all duration-200 border-4 text-left shadow-lg active:scale-[0.98] ${isSelected
+                  ? "bg-navy-900 border-gold-500 text-white shadow-2xl ring-4 ring-gold-400/50 translate-y-[-2px]"
+                  : "bg-white border-slate-200 hover:border-gold-400 text-navy-900 hover:shadow-xl"
+                  }`}
               >
                 <div className="flex items-center gap-5">
                   {/* Candidate Photo */}
@@ -201,27 +200,24 @@ export default function VotingKioskPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm ${
-                          isSelected
-                            ? "bg-gold-500 text-navy-950"
-                            : "bg-navy-100 text-navy-900"
-                        }`}
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm ${isSelected
+                          ? "bg-gold-500 text-navy-950"
+                          : "bg-navy-100 text-navy-900"
+                          }`}
                       >
                         #{candidate.order}
                       </span>
                       <p
-                        className={`text-xs uppercase tracking-wider font-extrabold ${
-                          isSelected ? "text-gold-400" : "text-slate-500"
-                        }`}
+                        className={`text-xs uppercase tracking-wider font-extrabold ${isSelected ? "text-gold-400" : "text-slate-500"
+                          }`}
                       >
                         Candidate #{candidate.order}
                       </p>
                     </div>
 
                     <h3
-                      className={`text-2xl md:text-3xl font-black tracking-tight ${
-                        isSelected ? "text-white" : "text-navy-900"
-                      }`}
+                      className={`text-2xl md:text-3xl font-black tracking-tight ${isSelected ? "text-white" : "text-navy-900"
+                        }`}
                     >
                       {candidate.name}
                     </h3>
@@ -230,11 +226,10 @@ export default function VotingKioskPage() {
 
                 {/* Selection Check Circle */}
                 <div
-                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-3 flex items-center justify-center transition-all shrink-0 ml-3 ${
-                    isSelected
-                      ? "bg-gold-500 border-gold-400 text-navy-950 scale-110"
-                      : "border-slate-300 group-hover:border-gold-400"
-                  }`}
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full border-3 flex items-center justify-center transition-all shrink-0 ml-3 ${isSelected
+                    ? "bg-gold-500 border-gold-400 text-navy-950 scale-110"
+                    : "border-slate-300 group-hover:border-gold-400"
+                    }`}
                 >
                   {isSelected ? (
                     <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
@@ -253,16 +248,15 @@ export default function VotingKioskPage() {
             type="button"
             disabled={!selectedCandidateId || isSubmitting}
             onClick={handleVoteSubmit}
-            className={`w-full max-w-xl py-5 md:py-6 px-8 rounded-3xl font-black text-2xl md:text-3xl uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-4 shadow-xl ${
-              selectedCandidateId && !isSubmitting
-                ? "bg-gold-500 hover:bg-gold-400 text-navy-950 border-4 border-amber-300 shadow-gold-500/25 active:scale-95 cursor-pointer"
-                : "bg-slate-300 text-slate-500 cursor-not-allowed border-4 border-slate-300 opacity-80"
-            }`}
+            className={`w-full max-w-xl py-5 md:py-6 px-8 rounded-3xl font-black text-2xl md:text-3xl uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-4 shadow-xl ${selectedCandidateId && !isSubmitting
+              ? "bg-gold-500 hover:bg-gold-400 text-navy-950 border-4 border-amber-300 shadow-gold-500/25 active:scale-95 cursor-pointer"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed border-4 border-slate-300 opacity-80"
+              }`}
           >
             <Vote className="w-8 h-8 md:w-10 md:h-10" />
             <span>{isSubmitting ? "Recording Vote..." : "Confirm Vote"}</span>
           </button>
-          
+
           <p className="text-slate-500 text-sm font-semibold tracking-wide">
             {selectedCandidateId
               ? "Press 'Confirm Vote' button or hit Enter key to complete"

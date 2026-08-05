@@ -1,34 +1,78 @@
-require("dotenv").config({ path: ".env.local" });
-const { MongoClient } = require("mongodb");
+import { MongoClient } from "mongodb";
+import * as fs from "fs";
+import * as path from "path";
 
-const uri = process.env.MONGODB_URI;
-const dbName = process.env.MONGODB_DB || "ln_college_voting";
-
-async function seed() {
-  const client = new MongoClient(uri);
-  await client.connect();
-  const db = client.db(dbName);
-
-  const candidates = [
-    { name: "Mohammad Hamza", order: 1 },
-    { name: "Kasim Shaikh", order: 2 },
-    { name: "Ankush Pandey", order: 3 },
-    { name: "Bhushan Chapetkar", order: 4 },
-  ];
-
-  for (const c of candidates) {
-    await db.collection("candidates").updateOne(
-      { name: c.name },
-      { $setOnInsert: { ...c, voteCount: 0 } },
-      { upsert: true }
-    );
+function loadEnvLocal() {
+  const envPath = path.resolve(process.cwd(), ".env.local");
+  if (fs.existsSync(envPath)) {
+    const envConfig = fs.readFileSync(envPath, "utf-8");
+    envConfig.split("\n").forEach((line) => {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith("#")) {
+        const [key, ...values] = trimmed.split("=");
+        if (key && values.length > 0 && !process.env[key.trim()]) {
+          process.env[key.trim()] = values.join("=").trim();
+        }
+      }
+    });
   }
-
-  console.log("Seeded:", candidates.map((c) => c.name).join(", "));
-  await client.close();
 }
 
-seed().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+loadEnvLocal();
+
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/ln_college_voting";
+const MONGODB_DB = process.env.MONGODB_DB || "ln_college_voting";
+
+export const INITIAL_CANDIDATES = [
+  { order: 1, name: "Ankush Pandey", image: "/candidates/ankush-pandey.jpg", voteCount: 0 },
+  { order: 2, name: "Mohammad Hamza", image: "/candidates/mohammad-hamza.jpg", voteCount: 0 },
+  { order: 3, name: "Bhushan Chapetkar", image: "/candidates/bhushan-chapetkar.jpg", voteCount: 0 },
+  { order: 4, name: "Kasim Shaikh", image: "/candidates/kasim-shaikh.jpg", voteCount: 0 },
+];
+
+async function seed() {
+  console.log("Connecting to MongoDB:", MONGODB_URI);
+  const client = new MongoClient(MONGODB_URI);
+
+  try {
+    await client.connect();
+    console.log("Connected successfully!");
+
+    const db = client.db(MONGODB_DB);
+    const candidatesCollection = db.collection("candidates");
+
+    await candidatesCollection.createIndex({ order: 1 });
+
+    console.log("Seeding candidates with images...");
+
+    for (const candidate of INITIAL_CANDIDATES) {
+      const existing = await candidatesCollection.findOne({ order: candidate.order });
+      if (!existing) {
+        await candidatesCollection.insertOne({
+          name: candidate.name,
+          order: candidate.order,
+          image: candidate.image,
+          voteCount: 0,
+          createdAt: new Date(),
+        });
+        console.log(`[+] Added Candidate #${candidate.order}: ${candidate.name}`);
+      } else {
+        // Update name and image to match seed data
+        await candidatesCollection.updateOne(
+          { _id: existing._id },
+          { $set: { name: candidate.name, image: candidate.image, order: candidate.order } }
+        );
+        console.log(`[=] Updated candidate #${candidate.order}: ${candidate.name}`);
+      }
+    }
+
+    console.log("\nDatabase Seeding Complete!");
+  } catch (error) {
+    console.error("Error during database seeding:", error);
+    process.exit(1);
+  } finally {
+    await client.close();
+  }
+}
+
+seed();
